@@ -3,6 +3,13 @@ import SwiftUI
 struct ProductListView: View {
     let category: Category
     @State private var viewModel = ProductsViewModel()
+    @State private var searchText = ""
+
+    private var productosFiltrados: [Product] {
+        guard case .exitoso(let productos) = viewModel.estado else { return [] }
+        guard !searchText.isEmpty else { return productos }
+        return productos.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+    }
 
     var body: some View {
         Group {
@@ -13,19 +20,22 @@ struct ProductListView: View {
                 ErrorView(mensaje: mensaje) {
                     Task { await viewModel.fetchProducts(for: category) }
                 }
-            case .exitoso(let productos):
-                List(productos) { product in
-                    NavigationLink(destination: ProductDetailView(product: product)) {
-                        ProductRowView(product: product)
+            case .exitoso:
+                if productosFiltrados.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                } else {
+                    List(productosFiltrados) { product in
+                        NavigationLink(destination: ProductDetailView(product: product)) {
+                            ProductRowView(product: product)
+                        }
                     }
+                    .listStyle(.plain)
                 }
-                .listStyle(.plain)
             }
         }
         .navigationTitle(category.nombre)
-        .task {
-            await viewModel.fetchProducts(for: category)
-        }
+        .searchable(text: $searchText, prompt: "Buscar en \(category.nombre)")
+        .task { await viewModel.fetchProducts(for: category) }
     }
 }
 
