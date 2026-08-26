@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct testApp: App {
@@ -8,10 +9,11 @@ struct testApp: App {
         WindowGroup {
             switch authViewModel.estado {
             case .autenticado:
-                HomeView(authViewModel: authViewModel)
+                MainTabView(authViewModel: authViewModel)
             default:
                 LoginView(authViewModel: authViewModel)
             }
         }
+        .modelContainer(for: FavoriteProduct.self)
     }
 }

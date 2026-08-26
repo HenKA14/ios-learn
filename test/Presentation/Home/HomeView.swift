@@ -18,11 +18,6 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("Tiendas")
-            .toolbar {
-                ToolbarItem {
-                    Button("Cerrar sesión") { authViewModel.logout() }
-                }
-            }
         }
     }
 }
