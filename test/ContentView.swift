@@ -6,14 +6,15 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if store.isLoading {
+                switch store.estado {
+                case .cargando:
                     ProgressView("Cargando productos...")
-                } else if let error = store.errorMessage {
+                case .error(let mensaje):
                     VStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
                             .foregroundStyle(.red)
-                        Text(error)
+                        Text(mensaje)
                             .multilineTextAlignment(.center)
                         Button("Reintentar") {
                             Task { await store.fetchProducts() }
@@ -21,8 +22,8 @@ struct ContentView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     .padding()
-                } else {
-                    List(store.products) { product in
+                case .exitoso(let productos):
+                    List(productos) { product in
                         NavigationLink(destination: ProductDetailView(product: product)) {
                             ProductRowView(product: product)
                         }

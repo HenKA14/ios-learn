@@ -1,23 +1,27 @@
 import Foundation
 import Observation
 
+// Un solo tipo que representa los 3 estados posibles — nunca pueden coexistir
+enum EstadoCarga {
+    case cargando
+    case error(mensaje: String)
+    case exitoso(productos: [Product])
+}
+
 @Observable
 class ProductStore {
-    var products: [Product] = []
-    var isLoading = false
-    var errorMessage: String?
+    var estado: EstadoCarga = .cargando
 
     func fetchProducts() async {
-        isLoading = true
-        errorMessage = nil
-        defer { isLoading = false }
+        estado = .cargando
 
         do {
             let url = URL(string: "https://fakestoreapi.com/products")!
             let (data, _) = try await URLSession.shared.data(from: url)
-            products = try JSONDecoder().decode([Product].self, from: data)
+            let productos = try JSONDecoder().decode([Product].self, from: data)
+            estado = .exitoso(productos: productos)
         } catch {
-            errorMessage = error.localizedDescription
+            estado = .error(mensaje: error.localizedDescription)
         }
     }
 }
