@@ -5,6 +5,7 @@ struct LoginView: View {
 
     @State private var username = ""
     @State private var password = ""
+    @State private var errorValidacion: String?
     @FocusState private var campoActivo: Campo?
 
     enum Campo { case usuario, contrasena }
@@ -15,6 +16,7 @@ struct LoginView: View {
     }
 
     private var mensajeError: String? {
+        if let validacion = errorValidacion { return validacion }
         if case .error(let msg) = authViewModel.estado { return msg }
         return nil
     }
@@ -37,26 +39,26 @@ struct LoginView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Formulario usuario/contraseña
+                // Formulario
                 VStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Usuario")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(.secondary)
                         TextField("admin", text: $username)
                             .textFieldStyle(.roundedBorder)
                             .focused($campoActivo, equals: .usuario)
                             .onSubmit { campoActivo = .contrasena }
+                            .onChange(of: username) { errorValidacion = nil }
                     }
 
                     VStack(alignment: .leading, spacing: 5) {
                         Text("Contraseña")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(.secondary)
                         SecureField("••••••", text: $password)
                             .textFieldStyle(.roundedBorder)
                             .focused($campoActivo, equals: .contrasena)
-                            .onSubmit { Task { await authViewModel.login(username: username, password: password) } }
+                            .onSubmit { Task { await iniciarSesion() } }
+                            .onChange(of: password) { errorValidacion = nil }
                     }
 
                     if let error = mensajeError {
@@ -67,10 +69,11 @@ struct LoginView: View {
                         .font(.caption)
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .transition(.opacity)
                     }
 
                     Button {
-                        Task { await authViewModel.login(username: username, password: password) }
+                        Task { await iniciarSesion() }
                     } label: {
                         Group {
                             if cargando {
@@ -83,7 +86,7 @@ struct LoginView: View {
                         .frame(height: 28)
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(username.isEmpty || password.isEmpty || cargando)
+                    .disabled(cargando)
                 }
 
                 // Divisor
@@ -123,7 +126,18 @@ struct LoginView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
+        .animation(.easeInOut(duration: 0.2), value: mensajeError != nil)
         .onAppear { campoActivo = .usuario }
+    }
+
+    private func iniciarSesion() async {
+        // Result<Void, ValidacionError> — valida antes de hacer la llamada de red
+        switch authViewModel.validar(username: username, password: password) {
+        case .success:
+            await authViewModel.login(username: username, password: password)
+        case .failure(let error):
+            withAnimation { errorValidacion = error.localizedDescription }
+        }
     }
 }
 
