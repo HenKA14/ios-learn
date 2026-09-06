@@ -1,27 +1,26 @@
 import Foundation
 
 class ProductRepository: ProductRepositoryProtocol {
+    private let client = NetworkClient.shared
 
-    func getProducts(for category: Category) async throws -> [Product] {
+    func getProducts(for category: Category, skip: Int, limit: Int) async throws -> [Product] {
         switch category.fuente {
         case .fakeStore(let categoria):
-            return try await fetchFakeStore(categoria: categoria)
+            return try await fetchFakeStore(categoria: categoria, limit: limit)
         case .dummyJSON(let categoria):
-            return try await fetchDummyJSON(categoria: categoria)
+            return try await fetchDummyJSON(categoria: categoria, skip: skip, limit: limit)
         }
     }
 
-    private func fetchFakeStore(categoria: String) async throws -> [Product] {
+    private func fetchFakeStore(categoria: String, limit: Int) async throws -> [Product] {
         let encoded = categoria.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? categoria
-        let url = URL(string: "https://fakestoreapi.com/products/category/\(encoded)")!
-        let (data, _) = try await URLSession.shared.data(from: url)
-        return try JSONDecoder().decode([Product].self, from: data)
+        let url = URL(string: "https://fakestoreapi.com/products/category/\(encoded)?limit=\(limit)")!
+        return try await client.get([Product].self, from: url)
     }
 
-    private func fetchDummyJSON(categoria: String) async throws -> [Product] {
-        let url = URL(string: "https://dummyjson.com/products/category/\(categoria)")!
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let response = try JSONDecoder().decode(DummyJSONResponse.self, from: data)
+    private func fetchDummyJSON(categoria: String, skip: Int, limit: Int) async throws -> [Product] {
+        let url = URL(string: "https://dummyjson.com/products/category/\(categoria)?limit=\(limit)&skip=\(skip)")!
+        let response = try await client.get(DummyJSONResponse.self, from: url)
         return response.products.map { $0.toDomain() }
     }
 }
