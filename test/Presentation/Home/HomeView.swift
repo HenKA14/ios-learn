@@ -12,7 +12,7 @@ struct HomeView: View {
                         NavigationLink(destination: ProductListView(category: category)) {
                             CategoryCardView(category: category)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressScaleButtonStyle())
                     }
                 }
                 .padding()
