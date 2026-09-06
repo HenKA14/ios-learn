@@ -17,7 +17,11 @@ struct FavoritesView: View {
                 } else {
                     List {
                         ForEach(favorites) { fav in
-                            FavoriteRowView(favorite: fav)
+                            NavigationLink {
+                                ProductDetailView(product: fav.toProduct())
+                            } label: {
+                                FavoriteRowView(favorite: fav)
+                            }
                         }
                         .onDelete { indexSet in
                             indexSet.forEach { modelContext.delete(favorites[$0]) }
