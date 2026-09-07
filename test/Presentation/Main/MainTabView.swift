@@ -16,9 +16,15 @@ struct MainTabView: View {
                 .tabItem { Label("Carrito", systemImage: "cart.fill") }
                 .badge(cartViewModel.totalItems)
 
+            StoreMapView()
+                .tabItem { Label("Mapa", systemImage: "map.fill") }
+
             ProfileView(authViewModel: authViewModel)
                 .tabItem { Label("Perfil", systemImage: "person.fill") }
         }
         .environment(cartViewModel)
+        .onAppear {
+            NotificationService.shared.requestPermission()
+        }
     }
 }

@@ -26,6 +26,7 @@ class CartViewModel {
         } else {
             items.append(CartItem(product: product, cantidad: 1))
         }
+        NotificationService.shared.notificarProductoAgregado(product)
     }
 
     func decrementar(_ item: CartItem) {
