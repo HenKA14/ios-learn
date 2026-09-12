@@ -2,10 +2,14 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var auth: AuthStore
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     var body: some View {
         ZStack {
-            if auth.isLoggedIn {
+            if !hasSeenOnboarding {
+                OnboardingView()
+                    .transition(.opacity)
+            } else if auth.isLoggedIn {
                 HomeView()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
@@ -19,6 +23,7 @@ struct RootView: View {
                     ))
             }
         }
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: hasSeenOnboarding)
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: auth.isLoggedIn)
     }
 }
